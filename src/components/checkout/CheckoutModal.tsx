@@ -12,7 +12,7 @@ interface Product {
   price: number;
   imageUrl?: string | null;
 }
-
+// test commit
 interface PaymentMethod {
   group: string;
   code: string;
