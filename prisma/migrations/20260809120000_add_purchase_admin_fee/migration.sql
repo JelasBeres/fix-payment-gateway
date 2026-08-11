@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Purchase" ADD COLUMN "adminFee" DECIMAL(10,2) NOT NULL DEFAULT 0;

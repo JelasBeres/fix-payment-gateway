@@ -1,0 +1,145 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(ADMIN)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id           String       @id @default(cuid())
+  name         String
+  slug         String       @unique
+  description  String
+  categoryId   String
+  price        Decimal      @db.Decimal(10, 2)
+  stock        Int          @default(-1)
+  isActive     Boolean      @default(true)
+  imageUrl     String?
+  features     String[]
+  durationDays Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  licenseKeys  LicenseKey[]
+  category     Category     @relation(fields: [categoryId], references: [id])
+  purchases    Purchase[]
+}
+
+model Purchase {
+  id             String         @id @default(cuid())
+  productId      String
+  quantity       Int            @default(1)
+  unitPrice      Decimal        @db.Decimal(10, 2)
+  totalPrice     Decimal        @db.Decimal(10, 2)
+  adminFee       Decimal        @default(0) @db.Decimal(10, 2)
+  status         PurchaseStatus @default(PENDING)
+  customerEmail  String
+  customerName   String?
+  paymentMethod  PaymentMethod?
+  gatewayOrderId String
+  gatewayTrxId   String?
+  gatewayPayload Json?
+  paymentUrl     String?
+  paidAt         DateTime?
+  expiredAt      DateTime?
+  isAdminRead    Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  licenseKeys    LicenseKey[]
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model LicenseKey {
+  id            String    @id @default(cuid())
+  purchaseId    String?
+  productId     String
+  key           String    @unique
+  status        KeyStatus @default(ACTIVE)
+  activatedAt   DateTime?
+  expiresAt     DateTime?
+  revokedAt     DateTime?
+  revokedReason String?
+  createdAt     DateTime  @default(now())
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  purchase      Purchase? @relation(fields: [purchaseId], references: [id])
+}
+
+model SiteConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model PaymentConfig {
+  id         String        @id @default(cuid())
+  method     PaymentMethod @unique
+  isActive   Boolean       @default(true)
+  updatedAt  DateTime      @updatedAt
+  feeFixed   Decimal       @default(0) @db.Decimal(10, 2)
+  feePercent Decimal       @default(0) @db.Decimal(10, 2)
+  label      String?
+}
+
+model Promo {
+  id        String   @id @default(cuid())
+  title     String?
+  imageUrl  String   // URL to Supabase storage
+  linkUrl   String   // Redirect to social media or other links
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+}
+
+enum PurchaseStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  QRIS
+  BANK_BCA
+  BANK_BNI
+  BANK_MANDIRI
+  BANK_BRI
+  DANA
+  OVO
+  GOPAY
+}
+
+enum KeyStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+}
