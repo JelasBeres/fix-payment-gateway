@@ -47,6 +47,22 @@ export async function POST(req: NextRequest) {
 
   const { items, email, name } = parsed.data;
 
+  // Defensive: if the BlockedEmail table is not yet migrated, proceed without blocking.
+  let isBlocked = false;
+  try {
+    const blocked = await prisma.blockedEmail.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    isBlocked = Boolean(blocked);
+  } catch (error) {
+    console.warn("Blocklist check skipped:", error);
+  }
+  if (isBlocked) {
+    return NextResponse.json({
+      error: "Maaf, pembelian dari email ini tidak dapat diproses. Hubungi kami jika ini sebuah kesalahan.",
+    }, { status: 403 });
+  }
+
   // QRIS is the only enabled payment method on this store.
   const paymentMethod = "QRIS";
 

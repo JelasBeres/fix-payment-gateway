@@ -94,6 +94,13 @@ model SiteConfig {
   updatedAt   DateTime @updatedAt
 }
 
+model BlockedEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
 model PaymentConfig {
   id         String        @id @default(cuid())
   method     PaymentMethod @unique
@@ -107,8 +114,8 @@ model PaymentConfig {
 model Promo {
   id        String   @id @default(cuid())
   title     String?
-  imageUrl  String   // URL to Supabase storage
-  linkUrl   String   // Redirect to social media or other links
+  imageUrl  String // URL to Supabase storage
+  linkUrl   String // Redirect to social media or other links
   order     Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

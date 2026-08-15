@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import KeysTable from "@/components/admin/KeysTable";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 
 export const metadata: Metadata = { title: "Vault License Keys | DripClient" };
 
@@ -65,9 +64,6 @@ export default async function AdminKeysPage({ searchParams }: { searchParams: Pr
             <span className="badge badge-success" style={{ padding: '8px 12px' }}>{active} READY</span>
             <span className="badge badge-muted" style={{ padding: '8px 12px' }}>{sold} SOLD</span>
           </div>
-          <Link href={`/admin/keys/new${productId ? `?productId=${productId}` : ""}`} className="btn btn-primary btn-sm">
-            <Plus size={16} /> Add Keys
-          </Link>
         </div>
       </div>
 
