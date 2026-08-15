@@ -97,6 +97,10 @@ export default async function LandingPage() {
             />
             <h1 className="logo-text" style={{ fontSize: '22px', margin: 0, color: 'var(--accent-green)', fontWeight: 900 }}>DRIP<span style={{ color: "var(--text-primary)" }}>CLIENT</span></h1>
           </Link>
+          <nav className="landing-nav" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
+            <Link href="/#products" style={{ fontSize: '11px', color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 800, letterSpacing: '0.1em' }}>LICENSE VAULT</Link>
+            <Link href="/faq" style={{ fontSize: '11px', color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 800, letterSpacing: '0.1em' }}>FAQ</Link>
+          </nav>
         </header>
 
         {/* Promo Slider Section */}
@@ -112,7 +116,7 @@ export default async function LandingPage() {
         {/* Scrolling Content Area */}
         <div className="scroll-content">
           <div className="content-inner">
-            <h3 className="section-title" style={{ padding: '0 0 20px' }}>Available Products</h3>
+            <h3 id="products" className="section-title" style={{ padding: '0 0 20px' }}>Available Products</h3>
 
             <div className="product-list">
               {Object.keys(groupedProducts).length === 0 ? (
