@@ -46,7 +46,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Data pesanan tidak valid" }, { status: 400 });
   }
 
-  const { items, email, name, paymentMethod } = parsed.data;
+  const { items, email, name } = parsed.data;
+
+  // QRIS is the only enabled payment method on this store.
+  const paymentMethod = "QRIS";
 
   // Deduplicate line items: same product is aggregated into a single quantity.
   const merged = new Map<string, number>();

@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
 import { getChannels, isWijayaPayConfigured } from "@/lib/payment/wijayapay";
 
+// QRIS is the only enabled payment method on this store.
 const FALLBACK_CHANNELS = [
   { group: "QRIS", code: "QRIS", name: "QRIS", image: "", status: "active" },
-  { group: "Virtual Account", code: "BCAVA", name: "BCA Virtual Account", image: "", status: "active" },
-  { group: "Virtual Account", code: "BNIVA", name: "BNI Virtual Account", image: "", status: "active" },
-  { group: "Virtual Account", code: "BRIVA", name: "BRI Virtual Account", image: "", status: "active" },
-  { group: "Virtual Account", code: "MANDIRIVA", name: "Mandiri Virtual Account", image: "", status: "active" },
-  { group: "Retail", code: "ALFAMART", name: "Alfamart", image: "", status: "active" },
-  { group: "Retail", code: "INDOMARET", name: "Indomaret", image: "", status: "active" },
 ];
 
 export const dynamic = "force-dynamic";
@@ -20,7 +15,9 @@ export async function GET() {
 
   try {
     const channels = await getChannels();
-    const methods = channels.map((c) => ({
+    const qris = channels.find((c) => c.code === "QRIS");
+    if (!qris) throw new Error("QRIS channel is not active");
+    const methods = [qris].map((c) => ({
       group: c.group,
       code: c.code,
       name: c.name,
@@ -32,8 +29,8 @@ export async function GET() {
     return NextResponse.json({ methods });
   } catch (error) {
     console.error("Get payment channels error:", error);
-    // Fallback to a curated list so the storefront stays usable if the
-    // gateway is briefly unreachable.
+    // Fallback so the storefront stays usable if the gateway is briefly
+    // unreachable. Checkout always forces QRIS server-side regardless.
     return NextResponse.json({
       methods: FALLBACK_CHANNELS.map((c) => ({
         group: c.group,
@@ -42,7 +39,7 @@ export async function GET() {
         image: c.image,
         feeAmount: null,
         feePercent: null,
-        typeFee: c.code === "QRIS" ? "customer" : "merchant",
+        typeFee: "customer",
       })),
     });
   }
