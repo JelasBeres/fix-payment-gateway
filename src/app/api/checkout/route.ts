@@ -4,7 +4,6 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import {
-  ADMIN_FEE,
   CHECKOUT_EXPIRY_HOURS,
   MAX_QUANTITY_PER_ITEM,
 } from "@/lib/payment/constants";
@@ -98,16 +97,15 @@ export async function POST(req: NextRequest) {
     return sum + Number(product.price) * line.quantity;
   }, 0);
 
-  const totalAmount = Math.round(productTotal) + ADMIN_FEE;
+  const totalAmount = Math.round(productTotal);
 
   const orderId = `INV-${Date.now()}-${nanoid(4)}`;
   const expiredAt = new Date(Date.now() + CHECKOUT_EXPIRY_HOURS * 60 * 60 * 1000);
 
-  // 1. Create Purchase records. The admin fee is stored once on the first line
-  //    so the order total (sum of totalPrice + adminFee) matches the nominal
-  //    sent to the gateway.
+  // 1. Create Purchase records. The gateway fee is charged to the merchant
+  //    (type_fee=merchant), so the customer pays exactly the product total.
   await prisma.$transaction(
-    lineItems.map((line, index) => {
+    lineItems.map((line) => {
       const product = dbProducts.find((p) => p.id === line.id)!;
       return prisma.purchase.create({
         data: {
@@ -115,7 +113,7 @@ export async function POST(req: NextRequest) {
           quantity: line.quantity,
           unitPrice: product.price,
           totalPrice: Number(product.price) * line.quantity,
-          adminFee: index === 0 ? ADMIN_FEE : 0,
+          adminFee: 0,
           status: "PENDING",
           customerEmail: email,
           customerName: name,
@@ -157,7 +155,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     orderId,
     payment,
-    adminFee: ADMIN_FEE,
+    adminFee: 0,
     expiresAt: expiredAt.toISOString(),
   });
 }
