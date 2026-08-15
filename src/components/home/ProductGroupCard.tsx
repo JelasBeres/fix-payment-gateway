@@ -17,6 +17,7 @@ interface ProductVariant {
   description: string;
   availableKeys: number;
   stock: number;
+  soldCount?: number;
   category?: { name: string };
 }
 
@@ -40,6 +41,7 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
   const sortedProducts = [...products].sort((a, b) => a.price - b.price);
   const lowestPrice = sortedProducts[0]?.price || 0;
   const baseProduct = sortedProducts[0];
+  const totalSold = products.reduce((sum, p) => sum + (p.soldCount ?? 0), 0);
 
   const openModal = () => {
     setStep(1);
@@ -142,6 +144,12 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
             <h4 className="product-title" style={{ fontSize: '15px', marginBottom: '4px', color: outOfStock ? 'var(--text-muted)' : 'var(--text-bright)' }}>{p.name}</h4>
             <p className="product-desc" style={{ fontSize: '11px', marginBottom: '8px', WebkitLineClamp: 2 }}>{p.description}</p>
 
+            {totalSold > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '10px', color: 'var(--text-muted)' }}>
+                <span style={{ fontWeight: 600 }}>{new Intl.NumberFormat("id-ID").format(totalSold)}+ Terjual</span>
+              </div>
+            )}
+
             <button
               onClick={() => {
                 if (outOfStock) return;
@@ -193,6 +201,12 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
 
             <h4 className="product-title" style={{ fontSize: '15px', marginBottom: '4px' }}>{baseName}</h4>
             <p className="product-desc" style={{ fontSize: '11px', marginBottom: '8px', WebkitLineClamp: 2 }}>{baseProduct?.description}</p>
+
+            {totalSold > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '10px', color: 'var(--text-muted)' }}>
+                <span style={{ fontWeight: 600 }}>{new Intl.NumberFormat("id-ID").format(totalSold)}+ Terjual</span>
+              </div>
+            )}
 
             <button
               onClick={openModal}

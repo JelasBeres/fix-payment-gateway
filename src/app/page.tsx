@@ -22,6 +22,10 @@ export default async function LandingPage() {
 
       include: { 
         category: true,
+        purchases: {
+          where: { status: "SUCCESS" },
+          select: { quantity: true },
+        },
         _count: {
           select: {
             licenseKeys: {
@@ -69,6 +73,10 @@ export default async function LandingPage() {
       durationDays: product.durationDays,
       categoryId: product.categoryId,
       availableKeys: product._count.licenseKeys,
+      soldCount: (product.purchases as Array<{ quantity: number }>).reduce(
+        (sum, p) => sum + p.quantity,
+        0
+      ),
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
       category: product.category ? {
