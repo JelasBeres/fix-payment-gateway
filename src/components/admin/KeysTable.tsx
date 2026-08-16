@@ -1,44 +1,17 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import { Key, Tag, User, Calendar, ShieldCheck, Download, Search, ChevronLeft, ChevronRight, Copy, Check, Trash2 } from "lucide-react";
+import { Key, Tag, User, Calendar, ShieldCheck, Download, Search, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
 
 interface KeysTableProps {
   initialKeys: any[];
 }
 
 export default function KeysTable({ initialKeys }: KeysTableProps) {
-  const router = useRouter();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [copyingId, setCopyingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const handleDelete = async (k: any) => {
-    if (k.purchaseId) {
-      toast.error("Key ini sudah terjual (terikat ke order), tidak bisa dihapus");
-      return;
-    }
-    if (!confirm(`Hapus license key ini?\n\n${k.key}`)) return;
-    setDeletingId(k.id);
-    try {
-      const res = await fetch(`/api/admin/keys/${k.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("License key dihapus");
-        router.refresh();
-      } else {
-        toast.error(data.error || "Gagal menghapus key");
-      }
-    } catch {
-      toast.error("Kesalahan saat menghubungi server");
-    } finally {
-      setDeletingId(null);
-    }
-  };
 
   // Search and Filter Logic
   const filteredKeys = useMemo(() => {
@@ -171,14 +144,6 @@ export default function KeysTable({ initialKeys }: KeysTableProps) {
                     <td style={{ paddingRight: '24px' }}>
                       <div className="flex gap-2">
                         <button className="btn-icon-sm" title="Download Key"><Download size={14} /></button>
-                        <button
-                          onClick={() => handleDelete(k)}
-                          disabled={deletingId === k.id}
-                          className="btn-icon-sm text-danger"
-                          title={k.purchaseId ? "Key sudah terjual" : "Hapus Key"}
-                        >
-                          {deletingId === k.id ? <Check size={14} /> : <Trash2 size={14} />}
-                        </button>
                       </div>
                     </td>
                   </tr>

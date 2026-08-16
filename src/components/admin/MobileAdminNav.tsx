@@ -13,7 +13,6 @@ import {
   Settings,
   LogOut,
   X,
-  Ban,
   Image as ImageIcon
 } from "lucide-react";
 import Link from "next/link";
@@ -24,7 +23,6 @@ const navItems = [
   { href: "/admin/products", label: "Products", icon: <Package size={20} />, desc: "Manage inventory" },
   { href: "/admin/categories", label: "Categories", icon: <Tags size={20} />, desc: "Organize products" },
   { href: "/admin/keys", label: "License Vault", icon: <Key size={20} />, desc: "Key management" },
-  { href: "/admin/blocklist", label: "Blocklist", icon: <Ban size={20} />, desc: "Blocked customers" },
   { href: "/admin/transactions", label: "Sales History", icon: <History size={20} />, desc: "Orders & revenue" },
   { href: "/admin/users", label: "Team Members", icon: <Users size={20} />, desc: "Staff management" },
   { href: "/admin/settings", label: "System Config", icon: <Settings size={20} />, desc: "Settings & security" },

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z, ZodError } from "zod";
-import { auth } from "@/lib/auth";
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -11,11 +10,6 @@ const registerSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const body = await req.json();
     const parsed = registerSchema.safeParse(body);
@@ -41,7 +35,6 @@ export async function POST(req: NextRequest) {
         email,
         password: hashedPassword,
         role: "ADMIN",
-        isActive: true,
       },
     });
 

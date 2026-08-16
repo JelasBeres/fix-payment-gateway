@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import ThemeToggle from "@/components/ThemeToggle";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dripclient.id"),
@@ -92,13 +92,13 @@ export default function RootLayout({
             <ThemeToggle />
           </div>
         </CartProvider>
+        {/* Midtrans Snap Script */}
         <Script
-          id="midtrans-snap"
-          src={process.env.MIDTRANS_IS_PRODUCTION === "true"
-            ? "https://app.midtrans.com/snap/snap.js"
+          src={process.env.MIDTRANS_IS_PRODUCTION === "true" 
+            ? "https://app.midtrans.com/snap/snap.js" 
             : "https://app.sandbox.midtrans.com/snap/snap.js"}
-          strategy="afterInteractive"
           data-client-key={process.env.MIDTRANS_CLIENT_KEY}
+          strategy="afterInteractive"
         />
       </body>
     </html>

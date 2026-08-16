@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Save, Trash2, Loader2, Package, Tag, Hash, FileText, Settings, Clock, ShieldCheck, Upload, Image as ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import imageCompression from "browser-image-compression";
+import { supabase } from "@/lib/supabase";
 import { nanoid } from "nanoid";
 
 interface Category {
@@ -25,6 +26,9 @@ export default function ProductForm({ initialData }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  
+  // Safe init
+  try {
 
   const [form, setForm] = useState({
     name: initialData?.name || "",
@@ -376,4 +380,15 @@ export default function ProductForm({ initialData }: ProductFormProps) {
       </form>
     </div>
   );
+  } catch (err: any) {
+    return (
+      <div className="card" style={{ padding: '24px', border: '2px solid var(--danger)', background: 'rgba(255,0,0,0.1)' }}>
+        <h3 style={{ color: 'var(--danger)', fontWeight: 800 }}>Component Crash Detected</h3>
+        <p style={{ fontSize: '14px', marginTop: '8px' }}>Error: {err.message}</p>
+        <button className="btn btn-outline btn-sm" style={{ marginTop: '16px' }} onClick={() => window.location.reload()}>
+          Reload Page
+        </button>
+      </div>
+    );
+  }
 }

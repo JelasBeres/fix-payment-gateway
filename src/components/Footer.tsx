@@ -4,9 +4,8 @@ import { Users, MessageCircle, Send, Play, Video } from "lucide-react";
 export default function Footer() {
   return (
     <footer className="landing-footer" style={{ marginTop: "24px", paddingBottom: "80px", borderTop: "1px solid var(--border-subtle)", paddingTop: "40px" }}>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', marginBottom: '32px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', marginBottom: '32px' }}>
         <Link href="/" style={{ fontSize: '13px', color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 700, letterSpacing: '0.1em' }}>HOME</Link>
-        <Link href="/#products" style={{ fontSize: '13px', color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 700, letterSpacing: '0.1em' }}>LICENSE VAULT</Link>
         <Link href="/faq" style={{ fontSize: '13px', color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 700, letterSpacing: '0.1em' }}>FAQ</Link>
         <Link href="/about" style={{ fontSize: '13px', color: 'var(--text-primary)', textDecoration: 'none', fontWeight: 700, letterSpacing: '0.1em' }}>ABOUT US</Link>
       </div>
