@@ -9,7 +9,6 @@ import {
   Key, 
   ShoppingCart, 
   BarChart3, 
-  Plus, 
   History,
   Activity,
   Settings
@@ -67,9 +66,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
           </div>
-          <Link href={`/admin/keys/new?productId=${product.id}`} className="btn btn-primary">
-            <Plus size={18} /> Add More Keys
-          </Link>
         </div>
       </div>
 

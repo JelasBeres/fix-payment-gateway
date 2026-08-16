@@ -24,8 +24,13 @@ async function main() {
   }
   console.log("✅ Categories ready");
 
-  // 2. Admin Account (Security: Use ENV or fallback)
-  const rawPassword = process.env.ADMIN_INITIAL_PASSWORD || "DripClient@2026";
+  // 2. Admin Account (Security: MUST be set via env)
+  const rawPassword = process.env.ADMIN_INITIAL_PASSWORD;
+  if (!rawPassword) {
+    throw new Error(
+      "ADMIN_INITIAL_PASSWORD is not set. Add it to .env before seeding."
+    );
+  }
   const adminPassword = await bcrypt.hash(rawPassword, 12);
   
   await prisma.user.upsert({

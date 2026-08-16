@@ -15,7 +15,12 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   // ── Admin Account ──────────────────────────────────────
-  const adminPassword = await bcrypt.hash("Admin@123", 12);
+  const rawPassword = process.env.ADMIN_INITIAL_PASSWORD;
+  if (!rawPassword) {
+    console.error("ERROR: ADMIN_INITIAL_PASSWORD is not set in .env");
+    process.exit(1);
+  }
+  const adminPassword = await bcrypt.hash(rawPassword, 12);
   const admin = await prisma.user.upsert({
     where: { email: "admin@dripclient.id" },
     update: {},

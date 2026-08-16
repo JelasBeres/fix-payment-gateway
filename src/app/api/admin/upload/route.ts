@@ -1,21 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
+import { auth } from '@/lib/auth';
 
 // Gunakan Service Role Key agar bisa bypass RLS (karena ini di sisi server)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
 export async function POST(req: Request) {
-  try {
-    console.log("Upload API: Request received");
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error("Upload API Error: Supabase credentials missing in .env");
       return NextResponse.json({ error: "Server configuration missing (Supabase URL or Key)" }, { status: 500 });
     }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    console.log("Upload API: Request received");
 
     const formData = await req.formData();
     const file = formData.get('file') as File;

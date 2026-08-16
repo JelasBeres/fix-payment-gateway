@@ -40,7 +40,7 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
   const sortedProducts = [...products].sort((a, b) => a.price - b.price);
   const lowestPrice = sortedProducts[0]?.price || 0;
   const baseProduct = sortedProducts[0];
-  
+
   // Generate consistent fake social proof based on product ID
   const socialProof = (() => {
     const seedStr = products[0]?.id || baseName;
@@ -151,7 +151,6 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
             <h4 className="product-title" style={{ fontSize: '15px', marginBottom: '4px', color: outOfStock ? 'var(--text-muted)' : 'var(--text-bright)' }}>{p.name}</h4>
             <p className="product-desc" style={{ fontSize: '11px', marginBottom: '8px', WebkitLineClamp: 2 }}>{p.description}</p>
 
-            {/* Fake Social Proof */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '10px', color: 'var(--text-muted)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#fbbf24' }}>
                 <Star size={12} fill="#fbbf24" />
@@ -213,7 +212,6 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
             <h4 className="product-title" style={{ fontSize: '15px', marginBottom: '4px' }}>{baseName}</h4>
             <p className="product-desc" style={{ fontSize: '11px', marginBottom: '8px', WebkitLineClamp: 2 }}>{baseProduct?.description}</p>
 
-            {/* Fake Social Proof */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '10px', color: 'var(--text-muted)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#fbbf24' }}>
                 <Star size={12} fill="#fbbf24" />

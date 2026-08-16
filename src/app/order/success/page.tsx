@@ -122,7 +122,7 @@ function SuccessContent() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700 }}>
                 <span style={{ color: '#aaa', textTransform: 'uppercase' }}>Metode</span>
-                <span style={{ color: '#8b5cf6' }}>{order.paymentMethod || 'MIDTRANS'}</span>
+                <span style={{ color: '#8b5cf6' }}>{order.paymentMethod || 'WIJAYAPAY'}</span>
               </div>
             </div>
 
