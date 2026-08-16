@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import ProductActionButtons from "@/components/checkout/DirectBuyButton";
-import { X, Clock, ShoppingCart, CreditCard, ChevronRight, CheckCircle2, Minus, Plus, Package } from "lucide-react";
+import { X, Clock, ShoppingCart, CreditCard, ChevronRight, CheckCircle2, Minus, Plus, Package, Star } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import CheckoutModal from "@/components/checkout/CheckoutModal";
 
@@ -40,6 +40,15 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
   const sortedProducts = [...products].sort((a, b) => a.price - b.price);
   const lowestPrice = sortedProducts[0]?.price || 0;
   const baseProduct = sortedProducts[0];
+
+  // Generate consistent fake social proof based on product ID
+  const socialProof = (() => {
+    const seedStr = products[0]?.id || baseName;
+    const seed = seedStr.split('').reduce((acc, char: string) => acc + char.charCodeAt(0), 0);
+    const sold = 5500 + (seed % 4400); // 5500 to 9900
+    const rating = (4.9 + (seed % 2) * 0.1).toFixed(1); // 4.9 or 5.0
+    return { sold, rating };
+  })();
 
   const openModal = () => {
     setStep(1);
@@ -143,7 +152,12 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
             <p className="product-desc" style={{ fontSize: '11px', marginBottom: '8px', WebkitLineClamp: 2 }}>{p.description}</p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '10px', color: 'var(--text-muted)' }}>
-              <span style={{ fontWeight: 600 }}>999+ Terjual</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#fbbf24' }}>
+                <Star size={12} fill="#fbbf24" />
+                <span style={{ fontWeight: 800 }}>{socialProof.rating}</span>
+              </div>
+              <span style={{ opacity: 0.5 }}>•</span>
+              <span style={{ fontWeight: 600 }}>{new Intl.NumberFormat("id-ID").format(socialProof.sold)}+ Terjual</span>
             </div>
 
             <button
@@ -199,7 +213,12 @@ export default function ProductGroupCard({ baseName, products }: ProductGroupCar
             <p className="product-desc" style={{ fontSize: '11px', marginBottom: '8px', WebkitLineClamp: 2 }}>{baseProduct?.description}</p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '10px', color: 'var(--text-muted)' }}>
-              <span style={{ fontWeight: 600 }}>999+ Terjual</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', color: '#fbbf24' }}>
+                <Star size={12} fill="#fbbf24" />
+                <span style={{ fontWeight: 800 }}>{socialProof.rating}</span>
+              </div>
+              <span style={{ opacity: 0.5 }}>•</span>
+              <span style={{ fontWeight: 600 }}>{new Intl.NumberFormat("id-ID").format(socialProof.sold)}+ Terjual</span>
             </div>
 
             <button

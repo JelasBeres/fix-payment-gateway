@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
@@ -91,6 +92,14 @@ export default function RootLayout({
             <ThemeToggle />
           </div>
         </CartProvider>
+        <Script
+          id="midtrans-snap"
+          src={process.env.MIDTRANS_IS_PRODUCTION === "true"
+            ? "https://app.midtrans.com/snap/snap.js"
+            : "https://app.sandbox.midtrans.com/snap/snap.js"}
+          strategy="afterInteractive"
+          data-client-key={process.env.MIDTRANS_CLIENT_KEY}
+        />
       </body>
     </html>
   );

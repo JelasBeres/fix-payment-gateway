@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import {
+  ADMIN_FEE,
   CHECKOUT_EXPIRY_HOURS,
   MAX_QUANTITY_PER_ITEM,
 } from "@/lib/payment/constants";
@@ -26,13 +27,10 @@ const checkoutSchema = z.object({
   email: z.string().email(),
   name: z.string().min(2).max(120),
   paymentMethod: z.string().min(1).max(50).default("QRIS"),
+  adminFee: z.number().min(0).default(ADMIN_FEE),
 });
 
 export async function POST(req: NextRequest) {
-  if (!isWijayaPayConfigured()) {
-    return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
-  }
-
   let body: unknown;
   try {
     body = await req.json();
@@ -45,7 +43,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Data pesanan tidak valid" }, { status: 400 });
   }
 
-  const { items, email, name } = parsed.data;
+  const { items, email, name, adminFee } = parsed.data;
+
+  // QRIS (WijayaPay) is the store's QRIS method; "MIDTRANS" opts into the
+  // Midtrans Snap (VA bank, e-wallet, kartu, dst).
+  const paymentMethod =
+    parsed.data.paymentMethod === "MIDTRANS" ? "MIDTRANS" : "QRIS";
+
+  if (paymentMethod === "QRIS" && !isWijayaPayConfigured()) {
+    return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+  }
 
   // Defensive: if the BlockedEmail table is not yet migrated, proceed without blocking.
   let isBlocked = false;
@@ -62,9 +69,6 @@ export async function POST(req: NextRequest) {
       error: "Maaf, pembelian dari email ini tidak dapat diproses. Hubungi kami jika ini sebuah kesalahan.",
     }, { status: 403 });
   }
-
-  // QRIS is the only enabled payment method on this store.
-  const paymentMethod = "QRIS";
 
   // Deduplicate line items: same product is aggregated into a single quantity.
   const merged = new Map<string, number>();
@@ -113,13 +117,13 @@ export async function POST(req: NextRequest) {
     return sum + Number(product.price) * line.quantity;
   }, 0);
 
-  const totalAmount = Math.round(productTotal);
+  const totalAmount = Math.round(productTotal + adminFee);
 
   const orderId = `INV-${Date.now()}-${nanoid(4)}`;
   const expiredAt = new Date(Date.now() + CHECKOUT_EXPIRY_HOURS * 60 * 60 * 1000);
 
-  // 1. Create Purchase records. The gateway fee is charged to the merchant
-  //    (type_fee=merchant), so the customer pays exactly the product total.
+  // 1. Create Purchase records. The admin fee (Biaya Admin) is charged to the
+  //    customer on top of the product total.
   await prisma.$transaction(
     lineItems.map((line) => {
       const product = dbProducts.find((p) => p.id === line.id)!;
@@ -129,7 +133,7 @@ export async function POST(req: NextRequest) {
           quantity: line.quantity,
           unitPrice: product.price,
           totalPrice: Number(product.price) * line.quantity,
-          adminFee: 0,
+          adminFee,
           status: "PENDING",
           customerEmail: email,
           customerName: name,
@@ -140,7 +144,47 @@ export async function POST(req: NextRequest) {
     })
   );
 
-  // 2. Call WijayaPay to generate payment.
+  // 2. Generate payment via the chosen gateway.
+  if (paymentMethod === "MIDTRANS") {
+    let snap: MidtransSnapResponse;
+    try {
+      snap = await createMidtransTransaction({
+        orderId,
+        totalAmount,
+        lineItems,
+        dbProducts,
+        adminFee,
+        name,
+        email,
+      });
+    } catch (error) {
+      await cleanupOrphanedPurchases(orderId);
+      console.error("Checkout Midtrans Error:", error);
+      return NextResponse.json(
+        { error: "Gagal terhubung ke payment gateway" },
+        { status: 502 }
+      );
+    }
+
+    // 3. Persist the payment details returned by the gateway.
+    await prisma.purchase.updateMany({
+      where: { gatewayOrderId: orderId },
+      data: {
+        paymentUrl: snap.redirect_url,
+        gatewayPayload: snap as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    return NextResponse.json({
+      orderId,
+      gateway: "midtrans",
+      payment: { token: snap.token, redirect_url: snap.redirect_url },
+      adminFee,
+      expiresAt: expiredAt.toISOString(),
+    });
+  }
+
+  // QRIS (WijayaPay)
   let payment;
   try {
     payment = await createTransaction({
@@ -171,9 +215,84 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     orderId,
     payment,
-    adminFee: 0,
+    adminFee,
     expiresAt: expiredAt.toISOString(),
   });
+}
+
+interface MidtransSnapResponse {
+  token: string;
+  redirect_url: string;
+}
+
+async function createMidtransTransaction(params: {
+  orderId: string;
+  totalAmount: number;
+  lineItems: { id: string; quantity: number }[];
+  dbProducts: { id: string; name: string; price: unknown }[];
+  adminFee: number;
+  name: string;
+  email: string;
+}): Promise<MidtransSnapResponse> {
+  const serverKey = process.env.MIDTRANS_SERVER_KEY;
+  if (!serverKey) {
+    throw new Error("MIDTRANS_SERVER_KEY is not configured");
+  }
+
+  const baseUrl =
+    process.env.MIDTRANS_IS_PRODUCTION === "true"
+      ? "https://app.midtrans.com/snap/v1/transactions"
+      : "https://app.sandbox.midtrans.com/snap/v1/transactions";
+
+  const itemDetails = params.lineItems.map((line) => {
+    const product = params.dbProducts.find((p) => p.id === line.id)!;
+    return {
+      id: product.id,
+      price: Number(product.price),
+      quantity: line.quantity,
+      name: product.name,
+    };
+  });
+
+  if (params.adminFee > 0) {
+    itemDetails.push({
+      id: "ADMIN_FEE",
+      price: params.adminFee,
+      quantity: 1,
+      name: "Biaya Layanan Pembayaran",
+    });
+  }
+
+  const authString = Buffer.from(`${serverKey}:`).toString("base64");
+  const res = await fetch(baseUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Basic ${authString}`,
+    },
+    body: JSON.stringify({
+      transaction_details: {
+        order_id: params.orderId,
+        gross_amount: Math.round(params.totalAmount),
+      },
+      item_details: itemDetails,
+      customer_details: {
+        first_name: params.name,
+        email: params.email,
+      },
+      usage_limit: 1,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.token) {
+    console.error("Midtrans Snap Error:", data);
+    throw new Error("Gagal terhubung ke payment gateway");
+  }
+
+  return { token: data.token, redirect_url: data.redirect_url };
 }
 
 async function cleanupOrphanedPurchases(orderId: string) {

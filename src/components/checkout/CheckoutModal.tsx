@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { X, CreditCard, Mail, User, ArrowRight, ShoppingCart, ShieldCheck, Copy, Check, QrCode, Clock, RefreshCw, ArrowLeft } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { formatRupiah } from "@/lib/utils/currency";
+import { ADMIN_FEE } from "@/lib/payment/constants";
 
 interface Product {
   id: string;
@@ -46,7 +47,7 @@ export default function CheckoutModal({
 
   const items = isCartCheckout ? cart : (product ? [{ ...product, quantity: 1 }] : []);
   const subtotal = isCartCheckout ? totalPrice : (product?.price || 0);
-  const grandTotal = subtotal;
+  const grandTotal = subtotal + ADMIN_FEE;
 
   // For customer-fee channels (e.g. QRIS) the gateway adds its fee on top of
   // the nominal, so we estimate it here to show the customer the real charge.
@@ -59,7 +60,7 @@ export default function CheckoutModal({
   }, [selected, grandTotal]);
   const estimatedTotal = grandTotal + gatewayFee;
 
-  // Load active payment channels from WijayaPay.
+  // Load active payment channels from WijayaPay + Midtrans option.
   useEffect(() => {
     let cancelled = false;
     fetch("/api/payment-methods")
@@ -67,7 +68,16 @@ export default function CheckoutModal({
       .then((data) => {
         if (cancelled) return;
         if (Array.isArray(data.methods) && data.methods.length > 0) {
-          setMethods(data.methods);
+          const midtransOption: PaymentMethod = {
+            group: "Midtrans",
+            code: "MIDTRANS",
+            name: "Metode Lainnya (VA Bank, E-Wallet, dll.)",
+            image: "",
+            feeAmount: null,
+            feePercent: null,
+            typeFee: "merchant",
+          };
+          setMethods([midtransOption, ...data.methods]);
           const defaultQris = data.methods.find((m: any) => m.code === "QRIS");
           setSelectedMethod(defaultQris?.code ?? data.methods[0].code);
         }
@@ -129,6 +139,7 @@ export default function CheckoutModal({
           email,
           name,
           paymentMethod: selectedMethod || "QRIS",
+          adminFee: ADMIN_FEE,
         }),
       });
 
@@ -136,6 +147,37 @@ export default function CheckoutModal({
       if (!res.ok) throw new Error(data.error || "Gagal membuat pesanan");
 
       if (isCartCheckout) localStorage.setItem('pending_cart_checkout', 'true');
+
+      // Midtrans Snap: open the hosted checkout popup instead of the QR screen.
+      if (data.gateway === "midtrans") {
+        const token = data.payment?.token;
+        const redirectUrl = data.payment?.redirect_url;
+        const win = window as any;
+        if (token && win.snap && typeof win.snap.pay === "function") {
+          win.snap.pay(token, {
+            onSuccess: () => {
+              window.location.href = `/order/success?order_id=${encodeURIComponent(data.orderId)}`;
+            },
+            onClose: () => {
+              setError("Pembayaran dibatalkan. Pesanan Anda belum dibayar.");
+              setLoading(false);
+              setPayment(null);
+            },
+            onError: (err: any) => {
+              console.error("Snap error:", err);
+              setError("Terjadi kesalahan saat memproses pembayaran.");
+              setLoading(false);
+              setPayment(null);
+            },
+          });
+        } else if (redirectUrl) {
+          window.location.href = redirectUrl;
+        } else {
+          throw new Error("Pembayaran gagal diproses");
+        }
+        return;
+      }
+
       setPayment({ orderId: data.orderId, data: data.payment });
     } catch (err: any) {
       setError(err.message);
@@ -339,6 +381,10 @@ export default function CheckoutModal({
             <div className="flex justify-between items-center text-xs text-muted">
               <span>Subtotal:</span>
               <span>{formatRupiah(subtotal)}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-muted">
+              <span>Biaya Admin (Layanan):</span>
+              <span>{formatRupiah(ADMIN_FEE)}</span>
             </div>
 
             <div className="flex justify-between items-center" style={{ marginTop: '2px' }}>
