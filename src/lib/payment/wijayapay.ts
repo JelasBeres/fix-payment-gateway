@@ -163,7 +163,7 @@ export async function checkStatus(refId: string): Promise<{
     message?: string;
   };
 
-  if (!res.ok || !json.success || !json.data) {
+  if (!res.ok || !json.data) {
     throw new WijayaPayError(json.message || "Gagal memeriksa status pembayaran");
   }
 
