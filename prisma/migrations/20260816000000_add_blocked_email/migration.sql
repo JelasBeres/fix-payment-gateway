@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "BlockedEmail" (
+CREATE TABLE IF NOT EXISTS "BlockedEmail" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "reason" TEXT,
@@ -9,4 +9,4 @@ CREATE TABLE "BlockedEmail" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BlockedEmail_email_key" ON "BlockedEmail"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "BlockedEmail_email_key" ON "BlockedEmail"("email");

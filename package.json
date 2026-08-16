@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma db execute --file prisma/migrations/20260816000000_add_blocked_email/migration.sql && next build",
     "start": "next start",
     "lint": "eslint",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
